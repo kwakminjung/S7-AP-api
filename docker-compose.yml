@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  aplist-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_MODE=aplist
+    networks:
+      - ap-net
+
+  template-api:
+    build: .
+    environment:
+      - APP_MODE=template
+    networks:
+      - ap-net
+
+networks:
+  apyy-net:
+    driver: bridge
