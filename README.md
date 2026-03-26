@@ -1,13 +1,12 @@
 ## How to Start
 - git clone
 ```
-~$ git clone git@github.com:kwakminjung/S7-AP-api.git
+git clone git@github.com:kwakminjung/S7-AP-api.git
 ```
-- `.env` 파일 설정
+- `.env` 파일 설정 (전달 예정 파일)
 ```
-~$ cd S7-AP-api
-~/S7-AP-api$ cp .env.example.env
-~/S7-AP-api$ vi .env
+cp .env.example.env
+vi .env
 ```
 - 실행
 ```
