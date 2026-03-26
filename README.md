@@ -3,18 +3,19 @@
 ```
 git clone git@github.com:kwakminjung/S7-AP-api.git
 ```
-- `.env` 파일 설정 (전달 예정 파일)
+- `.env` 파일 설정 (전달 파일)
 ```
+cd S7-AP-api
 cp .env.example.env
 vi .env
 ```
 - 실행
 ```
-~/S7-AP-api$ ./run.sh
+./run.sh
 ```
 
 ## AP List API 명세
-
+- prefix: `/ews`
 | index | method | URL | description |
 | :---: | :---: | :--- | :--- |
 | 1 | GET | `/aplist` | AP List에 있는 모든 AP의 Type, Name, IP, MAC, Map, Template, Status, # of Users, CAPWAP, AP Ver., Serial Number 조회 API |
