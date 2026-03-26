@@ -16,6 +16,7 @@ vi .env
 
 ## AP List API 명세
 - prefix: `/ews`
+
 | index | method | URL | description |
 | :---: | :---: | :--- | :--- |
 | 1 | GET | `/aplist` | AP List에 있는 모든 AP의 Type, Name, IP, MAC, Map, Template, Status, # of Users, CAPWAP, AP Ver., Serial Number 조회 API |
