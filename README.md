@@ -24,4 +24,5 @@ vi .env
 | 3 | GET | `/aplist/{ap_name}/users` | AP에 접속한 devices 상태 조회 API |
 
 ## AP List API 동작 아키텍처
-<img width="1398" height="854" alt="image" src="https://github.com/user-attachments/assets/3a01c108-d434-408c-9122-80d3b6db87bd" />
+<img width="1940" height="1204" alt="image" src="https://github.com/user-attachments/assets/75bb184d-f872-443a-88c4-4eb8f1089cb8" />
+
