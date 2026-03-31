@@ -2,6 +2,7 @@ from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.responses import Response
 from contextlib import asynccontextmanager
 import asyncio
+import httpx
 
 from app.services.login import login
 from app.config import DEVICES_PAGE, WIDE_MANAGEMENT_PAGE
@@ -28,7 +29,7 @@ async def aplist_scrape():
         await asyncio.sleep(10)
 
 @asynccontextmanager
-async def lifespan(router: APIRouter):
+async def aplist_lifespan(router: APIRouter):
     global driver, background_task
     
     driver = login()
@@ -53,7 +54,7 @@ async def lifespan(router: APIRouter):
     if driver:
         driver.quit()
 
-router = APIRouter(prefix='/ews', lifespan=lifespan)
+router = APIRouter(prefix='/ews')
 
 @router.get("/aplist")
 async def get_aplist():
@@ -94,11 +95,31 @@ async def get_ap_users(ap_name: str):
 
 @router.get("/aplist/{ap_name}/template")
 async def get_ap_template(ap_name: str):
-    template_server_url = f"http://template-api:8000/ews/aplist/{ap_name}/template"
+    data = get_aplist_json()
+    if data.get("status") != "success":
+        raise HTTPException(status_code=500, detail="cannot read data")
     
+    target_ap = None
+    for ap in data.get("data", []):
+        if ap_name in ap.get("Name", ""):
+            target_ap = ap
+            break
+
+    if not target_ap:
+        raise HTTPException(status_code=404, detail=f"'{ap_name}' not found in data")
+
+    template_number = target_ap.get("Template")
+
+    if not template_number:
+        raise HTTPException(status_code=404, detail=f"template number not found for '{ap_name}'")
+
+    template_server_url = f"http://template-api:8000/ews/internal/template/{template_number}"
+    
+    timeout_settings = httpx.Timeout(60.0, connect=10.0)
+
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(template_server_url, timeout=5.0)
+        async with httpx.AsyncClient(timeout=timeout_settings) as client:
+            response = await client.get(template_server_url)
             
             if response.status_code == 200:
                 return response.json()
@@ -109,10 +130,3 @@ async def get_ap_template(ap_name: str):
                 
     except httpx.RequestError as e:
         raise HTTPException(status_code=500, detail=f"failed to connect: {str(e)}")
-
-app = FastAPI(lifespan=lifespan)
-app.include_router(router)
-
-@app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
-    return Response(content="", media_type="image/x-icon")
