@@ -14,6 +14,28 @@ driver = None
 scrape_lock = asyncio.Lock()
 background_task = None
 
+async def recover_session():
+    global driver
+    print("attempting session recovery...")
+    
+    if driver:
+        try:
+            driver.quit()
+        except:
+            pass
+            
+    driver = await asyncio.to_thread(login)
+    
+    if driver:
+        print("session recovery login successful, navigating to pages...")
+        await asyncio.to_thread(redirect_by_js, driver, DEVICES_PAGE, frame_name="up")
+        await asyncio.to_thread(redirect_by_js, driver, WIDE_MANAGEMENT_PAGE, frame_name="main")
+        print("session recovery successful")
+        return True
+    else:
+        print("failed to recover session")
+        return False
+
 async def aplist_scrape():
     global driver
     while True:
@@ -23,6 +45,10 @@ async def aplist_scrape():
                 try:
                     result = await asyncio.to_thread(save_aplist_data, driver)
                     print("data scrape completed:", result)
+
+                    if result is None:
+                        await recover_session()
+
                 except Exception as e:
                     print(f"scraping error {e}")
             
