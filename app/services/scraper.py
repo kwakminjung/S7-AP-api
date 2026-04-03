@@ -171,8 +171,8 @@ def save_aplist_data(driver):
                 table_data.append(filtered_cols)
         
         current_dir = os.path.dirname(os.path.abspath(__file__))
-
-        save_dir = os.path.join(current_dir, "data")
+        parent_dir = os.path.dirname(current_dir)
+        save_dir = os.path.join(parent_dir, "data")
         os.makedirs(save_dir, exist_ok=True)
 
         tmp_path = os.path.join(save_dir, "aplist_tmp.csv")

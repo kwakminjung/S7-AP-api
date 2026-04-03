@@ -5,15 +5,23 @@ services:
     build: .
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - APP_MODE=aplist
+    volumes:
+      - ./app/data:/workspace/app/data
     networks:
       - ap-net
 
   template-api:
     build: .
+    env_file:
+      - .env
     environment:
       - APP_MODE=template
+    volumes:
+      - ./app/data:/workspace/app/data
     networks:
       - ap-net
 
