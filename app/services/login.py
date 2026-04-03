@@ -3,7 +3,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 from app.config import WIFI_CONTROLLER, ADM_NAME, ADM_PWD
@@ -21,7 +20,7 @@ def login():
     options.add_argument('--allow-insecure-localhost')
     options.add_argument('--ignore-ssl-errors=yes')
 
-    service = Service(ChromeDriverManager().install())
+    service = Service(executable_path="/usr/local/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
 
     try:

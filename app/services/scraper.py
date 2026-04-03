@@ -170,9 +170,7 @@ def save_aplist_data(driver):
                 filtered_cols = cols_text[1:9] + cols_text[11:14]
                 table_data.append(filtered_cols)
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_dir = os.path.dirname(current_dir)
-        save_dir = os.path.join(parent_dir, "data")
+        save_dir = "/workspace/app/data"
         os.makedirs(save_dir, exist_ok=True)
 
         tmp_path = os.path.join(save_dir, "aplist_tmp.csv")
