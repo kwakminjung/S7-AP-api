@@ -15,6 +15,9 @@ ENV PYTHONPATH=/workspace
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN python -c "from webdriver_manager.chrome import ChromeDriverManager; import shutil; shutil.copy(ChromeDriverManager().install(), '/usr/local/bin/chromedriver')"
+RUN chmod +x /usr/local/bin/chromedriver
+
 COPY . .
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

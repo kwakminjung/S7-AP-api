@@ -1,11 +1,38 @@
 import os
 import csv
 import time
+import traceback
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 
 from app.config import TABLE_SELECTOR
+
+def redirect_to_template_config(driver, template_number:str):
+    try:
+        driver.switch_to.default_content()
+        
+        select_element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "sel_Template"))
+        )
+        Select(select_element).select_by_value(str(template_number))
+
+        time.sleep(2)
+
+        config_xpath = "//tr[@id='radio_item']//a[contains(@class, 'button')]"
+        config_btn = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, config_xpath))
+        )
+        config_btn.click()
+        
+        time.sleep(2)
+        return True
+
+    except Exception as e:
+        print(f"failed to {template_number} template page redirection")
+        print(f"error: {e}")
+        print(traceback.format_exc())
+        return False
 
 def redirect_by_js(driver, js, frame_name=None):
     try:
@@ -24,6 +51,47 @@ def redirect_by_js(driver, js, frame_name=None):
     except Exception as e:
         print(f"failed to redirect {js} page: {e}")
         return False
+
+def get_template_radio(driver):
+    radio_data = {}
+    try:
+        radio = Select(driver.find_element(By.ID, "rf"))
+        radio_data["radio"] = radio.first_selected_option.text
+        
+        wlan_mode = Select(driver.find_element(By.ID, "mode"))
+        radio_data["wlan_mode"] = wlan_mode.first_selected_option.text
+        
+        channel_bandwidth = Select(driver.find_element(By.ID, "channelwidth"))
+        radio_data["channel_bandwidth"] = channel_bandwidth.first_selected_option.text
+        
+        channel = Select(driver.find_element(By.ID, "channel"))
+        radio_data["channel"] = channel.first_selected_option.text
+        
+        tx_power = Select(driver.find_element(By.ID, "txpower"))
+        radio_data["tx_power"] = tx_power.first_selected_option.text
+        
+        airtime_fairness = Select(driver.find_element(By.ID, "airtime_fairness"))
+        radio_data["airtime_fairness"] = airtime_fairness.first_selected_option.text
+        
+        band_steering = Select(driver.find_element(By.ID, "bandsteering"))
+        radio_data["band_steering"] = band_steering.first_selected_option.text
+        
+        basic_rate = Select(driver.find_element(By.ID, "basic_rate")) # Multicast/Broadcast Rate
+        radio_data["basic_rate"] = basic_rate.first_selected_option.text
+        
+        ofdma = Select(driver.find_element(By.ID, "ofdma"))
+        radio_data["ofdma"] = ofdma.first_selected_option.text
+
+        radio_data["interference_detection"] = driver.find_element(By.ID, "interference_detection").get_attribute("value")
+        radio_data["beacon_interval"] = driver.find_element(By.ID, "beacon").get_attribute("value")
+        radio_data["minimum_signal_allowed"] = driver.find_element(By.ID, "min_signal_allowed").get_attribute("value")
+        radio_data["bss_coloring"] = driver.find_element(By.ID, "he_bss_color").get_attribute("value")
+
+        return radio_data
+
+    except Exception as e:
+        print(f"failed to get template radio data {e}")
+        return None
 
 def get_ap_user_data(driver, ap_name):
     try:
@@ -102,9 +170,7 @@ def save_aplist_data(driver):
                 filtered_cols = cols_text[1:9] + cols_text[11:14]
                 table_data.append(filtered_cols)
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-
-        save_dir = os.path.join(current_dir, "data")
+        save_dir = "/workspace/app/data"
         os.makedirs(save_dir, exist_ok=True)
 
         tmp_path = os.path.join(save_dir, "aplist_tmp.csv")

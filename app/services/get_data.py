@@ -3,9 +3,9 @@ import csv
 
 def get_aplist_json():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    save_dir = os.path.join(current_dir, "data")
+    parent_dir = os.path.dirname(current_dir)
 
-    file_path = os.path.join(save_dir, "aplist.csv")
+    file_path = os.path.join(parent_dir, "data", "aplist.csv")
 
     if not os.path.exists(file_path):
         return {
