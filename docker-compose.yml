@@ -4,7 +4,7 @@ services:
   aplist-api:
     build: .
     ports:
-      - "8000:8000"
+      - "8000:8001"
     env_file:
       - .env
     environment:

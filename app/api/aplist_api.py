@@ -139,7 +139,7 @@ async def get_ap_template(ap_name: str):
     if not template_number:
         raise HTTPException(status_code=404, detail=f"template number not found for '{ap_name}'")
 
-    template_server_url = f"http://template-api:8000/ews/internal/template/{template_number}"
+    template_server_url = f"http://template-api:8001/ews/internal/template/{template_number}"
     
     timeout_settings = httpx.Timeout(60.0, connect=10.0)
 
