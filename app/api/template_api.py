@@ -13,24 +13,27 @@ scrape_lock = asyncio.Lock()
 @asynccontextmanager
 async def template_lifespan(router: APIRouter):
     global driver
-    
-    driver = login()
-    
-    if driver:
-        print("template_api: login successful")
-
-        redirect_by_js(driver, DEVICES_PAGE, frame_name="up")
-        print("template_api: devices page")
-
-        redirect_by_js(driver, WIDE_MANAGEMENT_PAGE, frame_name="main")
-        print("template_api: wide management page")
-
-        driver.get(AP_TEMPLATE_PAGE)
-        print("template_api: ap template page")
+    try:
+        driver = login()
         
-    else:
-        print("template_api: login failed! browser was not launched.")
-        
+        if driver:
+            print("template_api: login successful")
+
+            redirect_by_js(driver, DEVICES_PAGE, frame_name="up")
+            print("template_api: devices page")
+
+            redirect_by_js(driver, WIDE_MANAGEMENT_PAGE, frame_name="main")
+            print("template_api: wide management page")
+
+            driver.get(AP_TEMPLATE_PAGE)
+            print("template_api: ap template page")
+            
+        else:
+            print("template_api: login failed! browser was not launched.")
+    except Exception as e:
+        print(f"template_api: startup error occurred: {e}")
+        print(traceback.format_exc())
+
     yield
 
     print("template_api: router shut down")
