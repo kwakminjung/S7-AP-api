@@ -1,7 +1,7 @@
 ## How to Start
 - git clone
 ```
-git clone [git@github.com:kwakminjung/S7-AP-api.git](https://github.com/kwakminjung/S7-AP-api.git)
+git clone https://github.com/kwakminjung/S7-AP-api.git
 ```
 - `.env` 파일 설정
 ```
