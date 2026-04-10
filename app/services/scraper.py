@@ -8,89 +8,94 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from app.config import TABLE_SELECTOR
 
-def redirect_to_template_config(driver, template_number:str):
-    try:
-        driver.switch_to.default_content()
-        
-        select_element = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "sel_Template"))
-        )
-        Select(select_element).select_by_value(str(template_number))
+def _wait_for_page_ready(driver, timeout=10):
+    WebDriverWait(driver, timeout).until(
+        lambda d: d.execute_script("return document.readyState") == "complete"
+    )
 
-        time.sleep(2)
-
-        config_xpath = "//tr[@id='radio_item']//a[contains(@class, 'button')]"
-        config_btn = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, config_xpath))
-        )
-        config_btn.click()
-        
-        time.sleep(2)
-        return True
-
-    except Exception as e:
-        print(f"failed to {template_number} template page redirection")
-        print(f"error: {e}")
-        print(traceback.format_exc())
-        return False
+def _wait_for_select_options(driver, element_id, timeout=10):
+    def options_loaded(d):
+        try:
+            el = d.find_element(By.ID, element_id)
+            return len(Select(el).options) > 1
+        except Exception:
+            return False
+    WebDriverWait(driver, timeout).until(options_loaded)
 
 def redirect_by_js(driver, js, frame_name=None):
     try:
         driver.switch_to.default_content()
-
         if frame_name:
             driver.switch_to.frame(frame_name)
-        
+
         driver.execute_script(js)
-        WebDriverWait(driver, 10).until(
-            lambda d: d.execute_script("return document.readyState") == "complete"
-        )
-        
+        _wait_for_page_ready(driver)
+
         driver.switch_to.default_content()
         return True
     except Exception as e:
         print(f"failed to redirect {js} page: {e}")
         return False
 
-def get_template_radio(driver):
-    radio_data = {}
+def redirect_to_template_config(driver, template_number: str):
     try:
-        radio = Select(driver.find_element(By.ID, "rf"))
-        radio_data["radio"] = radio.first_selected_option.text
-        
-        wlan_mode = Select(driver.find_element(By.ID, "mode"))
-        radio_data["wlan_mode"] = wlan_mode.first_selected_option.text
-        
-        channel_bandwidth = Select(driver.find_element(By.ID, "channelwidth"))
-        radio_data["channel_bandwidth"] = channel_bandwidth.first_selected_option.text
-        
-        channel = Select(driver.find_element(By.ID, "channel"))
-        radio_data["channel"] = channel.first_selected_option.text
-        
-        tx_power = Select(driver.find_element(By.ID, "txpower"))
-        radio_data["tx_power"] = tx_power.first_selected_option.text
-        
-        airtime_fairness = Select(driver.find_element(By.ID, "airtime_fairness"))
-        radio_data["airtime_fairness"] = airtime_fairness.first_selected_option.text
-        
-        band_steering = Select(driver.find_element(By.ID, "bandsteering"))
-        radio_data["band_steering"] = band_steering.first_selected_option.text
-        
-        basic_rate = Select(driver.find_element(By.ID, "basic_rate")) # Multicast/Broadcast Rate
-        radio_data["basic_rate"] = basic_rate.first_selected_option.text
-        
-        ofdma = Select(driver.find_element(By.ID, "ofdma"))
-        radio_data["ofdma"] = ofdma.first_selected_option.text
+        driver.switch_to.default_content()
 
-        radio_data["interference_detection"] = driver.find_element(By.ID, "interference_detection").get_attribute("value")
-        radio_data["beacon_interval"] = driver.find_element(By.ID, "beacon").get_attribute("value")
-        radio_data["minimum_signal_allowed"] = driver.find_element(By.ID, "min_signal_allowed").get_attribute("value")
-        radio_data["bss_coloring"] = driver.find_element(By.ID, "he_bss_color").get_attribute("value")
+        select_element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "sel_Template"))
+        )
+        Select(select_element).select_by_value(str(template_number))
 
+        config_xpath = "//tr[@id='radio_item']//a[contains(@class, 'button')]"
+        config_btn = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, config_xpath))
+        )
+        config_btn.click()
+
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "rf"))
+        )
+
+        return True
+
+    except TimeoutException:
+        print(f"timeout: template {template_number} page did not load in time")
+        return False
+    except Exception as e:
+        print(f"failed to redirect to template {template_number}: {e}")
+        print(traceback.format_exc())
+        return False
+
+def _get_select_text(driver, element_id):
+    el = driver.find_element(By.ID, element_id)
+    return Select(el).first_selected_option.text
+
+def get_template_radio(driver):
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "rf"))
+        )
+
+        radio_data = {
+            "radio":                _get_select_text(driver, "rf"),
+            "wlan_mode":            _get_select_text(driver, "mode"),
+            "channel_bandwidth":    _get_select_text(driver, "channelwidth"),
+            "channel":              _get_select_text(driver, "channel"),
+            "tx_power":             _get_select_text(driver, "txpower"),
+            "airtime_fairness":     _get_select_text(driver, "airtime_fairness"),
+            "band_steering":        _get_select_text(driver, "bandsteering"),
+            "basic_rate":           _get_select_text(driver, "basic_rate"),
+            "ofdma":                _get_select_text(driver, "ofdma"),
+            "interference_detection": driver.find_element(By.ID, "interference_detection").get_attribute("value"),
+            "beacon_interval":        driver.find_element(By.ID, "beacon").get_attribute("value"),
+            "minimum_signal_allowed": driver.find_element(By.ID, "min_signal_allowed").get_attribute("value"),
+            "bss_coloring":           driver.find_element(By.ID, "he_bss_color").get_attribute("value"),
+        }
         return radio_data
 
     except Exception as e:
-        print(f"failed to get template radio data {e}")
+        print(f"failed to get template radio data: {e}")
+        print(traceback.format_exc())
         return None
 
 def get_ap_user_data(driver, ap_name):
@@ -106,7 +111,10 @@ def get_ap_user_data(driver, ap_name):
         driver.switch_to.default_content()
         driver.switch_to.frame("main")
 
-        button_xpath = f"//tr[td[3][normalize-space(.)='{ap_name}']]/td[9]//*[self::input or self::a or self::button]"
+        button_xpath = (
+            f"//tr[td[3][normalize-space(.)='{ap_name}']]"
+            f"/td[9]//*[self::input or self::a or self::button]"
+        )
         
         detail_button = WebDriverWait(driver, 7).until(
             EC.element_to_be_clickable((By.XPATH, button_xpath))
