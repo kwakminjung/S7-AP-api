@@ -3,6 +3,10 @@ import traceback
 from contextlib import asynccontextmanager
 from fastapi import APIRouter, HTTPException
 
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+
 from app.services.login import login
 from app.config import DEVICES_PAGE, WIDE_MANAGEMENT_PAGE, AP_TEMPLATE_PAGE
 from app.services.scraper import redirect_by_js, redirect_to_template_config, get_template_radio
@@ -13,21 +17,26 @@ scrape_lock = asyncio.Lock()
 @asynccontextmanager
 async def template_lifespan(router: APIRouter):
     global driver
+    print("template_api: lifespan started")
     try:
+        print("template_api: logging in...")
         driver = login()
-        
+        print(f"template_api: driver={driver}")
         if driver:
-            print("template_api: login successful")
-
             redirect_by_js(driver, DEVICES_PAGE, frame_name="up")
-            print("template_api: devices page")
-
-            redirect_by_js(driver, WIDE_MANAGEMENT_PAGE, frame_name="main")
-            print("template_api: wide management page")
-
-            driver.get(AP_TEMPLATE_PAGE)
-            print("template_api: ap template page")
             
+            WebDriverWait(driver, 10).until(
+                EC.frame_to_be_available_and_switch_to_it("main")
+            )
+            driver.switch_to.default_content()
+            
+            redirect_by_js(driver, WIDE_MANAGEMENT_PAGE, frame_name="main")
+            driver.get(AP_TEMPLATE_PAGE)
+            WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.ID, "sel_Template"))
+            )
+            print("template_api: sel_Template loaded")
+            print("template_api: ap template page ready")
         else:
             print("template_api: login failed! browser was not launched.")
     except Exception as e:
@@ -39,7 +48,7 @@ async def template_lifespan(router: APIRouter):
     print("template_api: router shut down")
     if driver:
         driver.quit()
-        print("template_api: Selenium brower shut down")
+        print("template_api: Selenium browser shut down")
 
 router = APIRouter(prefix='/ews')
 

@@ -5,6 +5,7 @@ import traceback
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
 from app.config import TABLE_SELECTOR
 
@@ -41,10 +42,11 @@ def redirect_to_template_config(driver, template_number: str):
     try:
         driver.switch_to.default_content()
 
-        select_element = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "sel_Template"))
-        )
-        Select(select_element).select_by_value(str(template_number))
+        driver.execute_script("""
+            const sel = document.getElementById('sel_Template');
+            sel.value = arguments[0];
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        """, str(template_number))
 
         config_xpath = "//tr[@id='radio_item']//a[contains(@class, 'button')]"
         config_btn = WebDriverWait(driver, 10).until(
@@ -55,7 +57,6 @@ def redirect_to_template_config(driver, template_number: str):
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "rf"))
         )
-
         return True
 
     except TimeoutException:
@@ -76,21 +77,31 @@ def get_template_radio(driver):
             EC.presence_of_element_located((By.ID, "rf"))
         )
 
-        radio_data = {
-            "radio":                _get_select_text(driver, "rf"),
-            "wlan_mode":            _get_select_text(driver, "mode"),
-            "channel_bandwidth":    _get_select_text(driver, "channelwidth"),
-            "channel":              _get_select_text(driver, "channel"),
-            "tx_power":             _get_select_text(driver, "txpower"),
-            "airtime_fairness":     _get_select_text(driver, "airtime_fairness"),
-            "band_steering":        _get_select_text(driver, "bandsteering"),
-            "basic_rate":           _get_select_text(driver, "basic_rate"),
-            "ofdma":                _get_select_text(driver, "ofdma"),
-            "interference_detection": driver.find_element(By.ID, "interference_detection").get_attribute("value"),
-            "beacon_interval":        driver.find_element(By.ID, "beacon").get_attribute("value"),
-            "minimum_signal_allowed": driver.find_element(By.ID, "min_signal_allowed").get_attribute("value"),
-            "bss_coloring":           driver.find_element(By.ID, "he_bss_color").get_attribute("value"),
-        }
+        radio_data = driver.execute_script("""
+            const getSelectVal = id => {
+                const el = document.getElementById(id);
+                return el ? el.options[el.selectedIndex].text : null;
+            };
+            const getInputVal = id => {
+                const el = document.getElementById(id);
+                return el ? el.value : null;
+            };
+            return {
+                radio:                    getSelectVal('rf'),
+                wlan_mode:                getSelectVal('mode'),
+                channel_bandwidth:        getSelectVal('channelwidth'),
+                channel:                  getSelectVal('channel'),
+                tx_power:                 getSelectVal('txpower'),
+                airtime_fairness:         getSelectVal('airtime_fairness'),
+                band_steering:            getSelectVal('bandsteering'),
+                basic_rate:               getSelectVal('basic_rate'),
+                ofdma:                    getSelectVal('ofdma'),
+                interference_detection:   getInputVal('interference_detection'),
+                beacon_interval:          getInputVal('beacon'),
+                minimum_signal_allowed:   getInputVal('min_signal_allowed'),
+                bss_coloring:             getInputVal('he_bss_color'),
+            };
+        """)
         return radio_data
 
     except Exception as e:
