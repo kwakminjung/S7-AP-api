@@ -12,3 +12,6 @@ WIDE_MANAGEMENT_PAGE = os.getenv("WIDE_MANAGEMENT_PAGE")
 AP_TEMPLATE_PAGE = os.getenv("AP_TEMPLATE_PAGE")
 
 TABLE_SELECTOR = os.getenv("TABLE_SELECTOR")
+
+TEMPLATE_API_HOST = os.getenv("TEMPLATE_API_HOST", "template-api.default.svc.cluster.local.")
+TEMPLATE_API_PORT = int(os.getenv("TEMPLATE_API_SVC_PORT", "8000"))
