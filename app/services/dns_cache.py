@@ -17,9 +17,24 @@ class DNSCache:
                     return ip
 
             loop = asyncio.get_event_loop()
-            ip = await loop.run_in_executor(None, socket.gethostbyname, hostname)
-            self._cache[hostname] = (ip, time.monotonic())
-            print(f"[DNSCache] resolved: {hostname} -> {ip}")
-            return ip
+            last_error = None
 
-dns_cache = DNSCache(ttl=60)
+            for attempt in range(1, self.retries + 1):
+                try:
+                    ip = await loop.run_in_executor(None, socket.gethostbyname, hostname)
+                    self._cache[hostname] = (ip, time.monotonic())
+                    print(f"[DNSCache] resolved: {hostname} -> {ip} (attempt {attempt})")
+                    return ip
+                except Exception as e:
+                    last_error = e
+                    print(f"[DNSCache] resolution failed for {hostname} on attempt {attempt}: {e}")
+                    await asyncio.sleep(1)
+
+            if hostname in self._cache:
+                ip, _ = self._cache[hostname]
+                print(f"[DNSCache] returning stale cache for {hostname} -> {ip}")
+                return ip
+
+            raise Exception(f"DNS resolution failed for {hostname} after {self.retries} attempts: {last_error}")
+
+dns_cache = DNSCache(ttl=300, retries=3, retry_delay=0.5)
