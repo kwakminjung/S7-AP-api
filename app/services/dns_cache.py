@@ -3,8 +3,10 @@ import socket
 import time
 
 class DNSCache:
-    def __init__(self, ttl: int = 60):
+    def __init__(self, ttl: int = 60, retries: int = 3, retry_delay: float = 0.5):
         self.ttl = ttl
+        self.retries = retries
+        self.retry_delay = retry_delay
         self._cache: dict[str, tuple[str, float]] = {}
         self._lock = asyncio.Lock()
 
