@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --chart -o ./helm/s7-ap-api
+    kompose.version: 1.34.0 (cbf2835db)
+  labels:
+    io.kompose.service: aplist-api
+  name: aplist-api
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    io.kompose.service: aplist-api

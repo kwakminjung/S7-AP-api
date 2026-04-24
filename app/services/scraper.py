@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
-from app.config import TABLE_SELECTOR
+from app.config import TABLE_SELECTOR, AP_TEMPLATE_PAGE
 
 def _wait_for_page_ready(driver, timeout=10):
     WebDriverWait(driver, timeout).until(
@@ -206,3 +206,52 @@ def save_aplist_data(driver):
     except Exception as e:
         print(f"failed to scrape aplist data: {e}")
         return None
+
+def save_template_data(driver, template_numbers: list[str]):
+    results = []
+
+    for template_number in template_numbers:
+        try:
+            success = redirect_to_template_config(driver, template_number)
+            if not success:
+                print(f"save_template_data: template {template_number} redirect failed, skipping")
+                continue
+
+            radio_data = get_template_radio(driver)
+            if radio_data:
+                radio_data["template_number"] = template_number
+                results.append(radio_data)
+                print(f"save_template_data: template {template_number} scraped")
+            else:
+                print(f"save_template_data: template {template_number} returned no data")
+
+        except Exception as e:
+            print(f"save_template_data: error on template {template_number}: {e}")
+
+        finally:
+            try:
+                driver.switch_to.default_content()
+                driver.get(AP_TEMPLATE_PAGE)
+                _wait_for_select_options(driver, "sel_Template", timeout=15)
+            except Exception as e:
+                print(f"save_template_data: failed to return to template page: {e}")
+
+    if not results:
+        print("save_template_data: no data collected, skipping CSV write")
+        return None
+
+    save_dir = "/workspace/app/data"
+    os.makedirs(save_dir, exist_ok=True)
+
+    fieldnames = ["template_number"] + [k for k in results[0].keys() if k != "template_number"]
+    tmp_path = os.path.join(save_dir, "template_data_tmp.csv")
+    file_path = os.path.join(save_dir, "template_data.csv")
+
+    with open(tmp_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(results)
+
+    os.replace(tmp_path, file_path)
+    print(f"save_template_data: saved {len(results)} templates to {file_path}")
+    return file_path

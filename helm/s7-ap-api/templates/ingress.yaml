@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: s7-ap-api-ingress
+  namespace: netai
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /ews/aplist
+            pathType: Prefix
+            backend:
+              service:
+                name: aplist-api
+                port:
+                  number: 8000
+          - path: /ews/template
+            pathType: Prefix
+            backend:
+              service:
+                name: template-api
+                port:
+                  number: 8000

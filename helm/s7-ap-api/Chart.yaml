@@ -1,0 +1,8 @@
+name: s7-ap-api-release
+description: A generated Helm Chart for ./helm/s7-ap-api from Skippbox Kompose
+version: 0.0.1
+apiVersion: v2
+keywords:
+  - ./helm/s7-ap-api
+sources:
+home:

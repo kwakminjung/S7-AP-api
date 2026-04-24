@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --chart -o ./helm/s7-ap-api
+    kompose.version: 1.34.0 (cbf2835db)
+  labels:
+    io.kompose.service: aplist-api
+  name: aplist-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: aplist-api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --chart -o ./helm/s7-ap-api
+        kompose.version: 1.34.0 (cbf2835db)
+      labels:
+        io.kompose.service: aplist-api
+    spec:
+      containers:
+        - env:
+            - name: ADM_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: ADM_NAME
+                  name: s7-ap-api-secret
+            - name: ADM_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: ADM_PWD
+                  name: s7-ap-api-secret
+            - name: APP_MODE
+              value: aplist
+            - name: AP_TEMPLATE_PAGE
+              valueFrom:
+                secretKeyRef:
+                  key: AP_TEMPLATE_PAGE
+                  name: s7-ap-api-secret
+            - name: DEVICES_PAGE
+              valueFrom:
+                secretKeyRef:
+                  key: DEVICES_PAGE
+                  name: s7-ap-api-secret
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: TABLE_SELECTOR
+              valueFrom:
+                secretKeyRef:
+                  key: TABLE_SELECTOR
+                  name: s7-ap-api-secret
+            - name: TEMPLATE_API_URL
+              value: "http://template-api:8000"
+            - name: WIDE_MANAGEMENT_PAGE
+              valueFrom:
+                secretKeyRef:
+                  key: WIDE_MANAGEMENT_PAGE
+                  name: s7-ap-api-secret
+            - name: WIFI_CONTROLLER
+              valueFrom:
+                secretKeyRef:
+                  key: WIFI_CONTROLLER
+                  name: s7-ap-api-secret
+          image: kwakminjung/aplist_api:v3.2
+          name: aplist-api
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /workspace/app/data
+              name: aplist-data
+      restartPolicy: Always
+      volumes:
+        - name: aplist-data
+          hostPath:
+            path: /data/aplist-api
+            type: DirectoryOrCreate

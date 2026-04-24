@@ -9,17 +9,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 from app.services.login import login
-from app.config import DEVICES_PAGE, WIDE_MANAGEMENT_PAGE, TEMPLATE_API_HOST, TEMPLATE_API_PORT
+from app.config import DEVICES_PAGE, WIDE_MANAGEMENT_PAGE
 
 from app.services.scraper import save_aplist_data, redirect_by_js, get_ap_user_data
 from app.services.get_data import get_aplist_json
 
-from app.services.dns_cache import dns_cache
-
 driver = None
 scrape_lock = asyncio.Lock()
-template_priority = asyncio.Event()
-template_priority.set()
 
 background_task = None
 
@@ -57,7 +53,6 @@ async def aplist_scrape():
     global driver
     while True:
         if driver:
-            await template_priority.wait()
             async with scrape_lock:
                 print("starting data scrape...")
                 try:
@@ -143,53 +138,28 @@ async def get_ap_users(ap_name: str):
 
 @router.get("/aplist/{ap_name}/template")
 async def get_ap_template(ap_name: str):
-    template_priority.clear()
-    async with scrape_lock:
-        pass
-    
-    try:
-        data = get_aplist_json()
-        if data.get("status") != "success":
-            raise HTTPException(status_code=500, detail="cannot read data")
-        
-        target_ap = None
-        for ap in data.get("data", []):
-            if ap_name in ap.get("Name", ""):
-                target_ap = ap
-                break
+    # 1. aplist에서 ap 찾기
+    async with httpx.AsyncClient() as client:
+        aplist_res = await client.get("http://localhost:8000/ews/aplist")
+        data = aplist_res.json()
 
-        if not target_ap:
-            raise HTTPException(status_code=404, detail=f"'{ap_name}' not found in data")
+    if data.get("status") != "success":
+        raise HTTPException(status_code=500, detail="cannot read aplist")
 
-        template_number = target_ap.get("Template")
-        if not template_number:
-            raise HTTPException(status_code=404, detail=f"template number not found for '{ap_name}'")
+    target_ap = None
+    for ap in data.get("data", []):
+        if ap_name in ap.get("Name", ""):
+            target_ap = ap
+            break
 
-        timeout_settings = httpx.Timeout(60.0, connect=30.0)
+    if not target_ap:
+        raise HTTPException(status_code=404, detail=f"'{ap_name}' not found")
 
-        try:
-            ip = await dns_cache.resolve(TEMPLATE_API_HOST)
-            template_server_url = f"http://{ip}:{TEMPLATE_API_PORT}/ews/internal/template/{template_number}"
-            print(f"[template] connecting to {template_server_url}")
+    template_number = target_ap.get("Template")
+    if not template_number or not str(template_number).strip().isdigit():
+        raise HTTPException(status_code=404, detail=f"no valid template for '{ap_name}'")
 
-            async with httpx.AsyncClient(timeout=timeout_settings) as client:
-                response = await client.get(
-                    template_server_url,
-                    headers={"Host": TEMPLATE_API_HOST}
-                )
-                if response.status_code == 200:
-                    return response.json()
-                elif response.status_code == 404:
-                    raise HTTPException(status_code=404, detail=f"cannot found '{ap_name}'")
-                else:
-                    raise HTTPException(status_code=500, detail="occur template_api server error")
-        except httpx.RequestError as e:
-            print(f"template request error: {repr(e)}")
-            raise HTTPException(status_code=500, detail=f"failed to connect: {repr(e)}")
-        except Exception as e:
-            print(f"unexpected error: {repr(e)}")
-            import traceback
-            print(traceback.format_exc())
-            raise
-    finally:
-        template_priority.set()
+    # 2. template-api에서 템플릿 가져오기
+    async with httpx.AsyncClient() as client:
+        tmpl_res = await client.get(f"http://template-api:8000/ews/template/{template_number}")
+        return tmpl_res.json()
