@@ -2,7 +2,6 @@ from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.responses import Response
 from contextlib import asynccontextmanager
 import asyncio
-import httpx
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -135,31 +134,3 @@ async def get_ap_users(ap_name: str):
             "status": "success",
             "data": user_data
         }
-
-@router.get("/aplist/{ap_name}/template")
-async def get_ap_template(ap_name: str):
-    # 1. aplist에서 ap 찾기
-    async with httpx.AsyncClient() as client:
-        aplist_res = await client.get("http://localhost:8000/ews/aplist")
-        data = aplist_res.json()
-
-    if data.get("status") != "success":
-        raise HTTPException(status_code=500, detail="cannot read aplist")
-
-    target_ap = None
-    for ap in data.get("data", []):
-        if ap_name in ap.get("Name", ""):
-            target_ap = ap
-            break
-
-    if not target_ap:
-        raise HTTPException(status_code=404, detail=f"'{ap_name}' not found")
-
-    template_number = target_ap.get("Template")
-    if not template_number or not str(template_number).strip().isdigit():
-        raise HTTPException(status_code=404, detail=f"no valid template for '{ap_name}'")
-
-    # 2. template-api에서 템플릿 가져오기
-    async with httpx.AsyncClient() as client:
-        tmpl_res = await client.get(f"http://template-api:8000/ews/template/{template_number}")
-        return tmpl_res.json()

@@ -65,7 +65,7 @@ spec:
                 secretKeyRef:
                   key: WIFI_CONTROLLER
                   name: s7-ap-api-secret
-          image: kwakminjung/aplist_api:v3.2
+          image: kwakminjung/aplist_api:v3.4
           name: aplist-api
           ports:
             - containerPort: 8000

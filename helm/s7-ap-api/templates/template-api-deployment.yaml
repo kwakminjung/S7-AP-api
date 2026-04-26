@@ -63,7 +63,7 @@ spec:
                 secretKeyRef:
                   key: WIFI_CONTROLLER
                   name: s7-ap-api-secret
-          image: kwakminjung/template_api:v3.2
+          image: kwakminjung/template_api:v3.4
           name: template-api
           volumeMounts:
             - mountPath: /workspace/app/data

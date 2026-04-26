@@ -245,7 +245,7 @@ def save_template_data(driver, template_numbers: list[str]):
 
     fieldnames = ["template_number"] + [k for k in results[0].keys() if k != "template_number"]
     tmp_path = os.path.join(save_dir, "template_data_tmp.csv")
-    file_path = os.path.join(save_dir, "template_data.csv")
+    file_path = os.path.join(save_dir, "template.csv")
 
     with open(tmp_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

@@ -37,7 +37,7 @@ def get_aplist_json():
 def get_template_json(template_number: str = None):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
-    file_path = os.path.join(parent_dir, "data", "template_data.csv")
+    file_path = os.path.join(parent_dir, "data", "template.csv")
 
     if not os.path.exists(file_path):
         return {
