@@ -29,5 +29,5 @@ docker compose up --build -d
 | 4 | GET | `/template` | AP List에서 현재 사용 중인 전체 template 정보 조회 API |
 | 5 | GET | `/template/{template_num}` | template의 번호 (template_num)를 통해 해당 template의 radio, wlan_mode, channel_bandwidth, channel, tx_power, airtime_fairness, band_steering, basic_rate, ofdma, interference_detection, beacon_interval, minimum_signal_allowed, bss_coloring 정보 조회 API |
 
-## AP List API 동작 아키텍처
+## API 아키텍처
 <img width="1141" height="655" alt="image" src="https://github.com/user-attachments/assets/939b8715-79b6-4287-8a60-fd1122600dc6" />
