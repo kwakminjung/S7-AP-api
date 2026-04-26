@@ -13,4 +13,4 @@ env/
 .DS_Store
 Thumbs.db
 
-docker-compose/
+helm/s7-ap-api/secret.yaml
